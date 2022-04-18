@@ -26,6 +26,7 @@ import com.google.mediapipe.solutions.hands.HandsResult;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -187,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         // Connects MediaPipe Hands solution to the user-defined HandsResultImageView.
         hands.setResultListener(
                 handsResult -> {
-                    logWristLandmark(handsResult, /*showPixelValues=*/ true);
+                    logWristLandmark(handsResult);
                     imageView.setHandsResult(handsResult);
                     runOnUiThread(() -> imageView.update());
                 });
@@ -276,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
         glSurfaceView.setRenderInputImage(true);
         hands.setResultListener(
                 handsResult -> {
-                    logWristLandmark(handsResult, /*showPixelValues=*/ false);
+                    logWristLandmark(handsResult);
                     glSurfaceView.setRenderData(handsResult);
                     glSurfaceView.requestRender();
                 });
@@ -322,38 +323,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void logWristLandmark(HandsResult result, boolean showPixelValues) {
+    private void logWristLandmark(HandsResult result) {
         if (result.multiHandLandmarks().isEmpty()) {
             return;
         }
-        LandmarkProto.NormalizedLandmark wristLandmark =
-                result.multiHandLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
-        // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
-        if (showPixelValues) {
-            int width = result.inputBitmap().getWidth();
-            int height = result.inputBitmap().getHeight();
-            Log.i(
-                    TAG,
-                    String.format(
-                            "MediaPipe Hand wrist coordinates (pixel values): x=%f, y=%f",
-                            wristLandmark.getX() * width, wristLandmark.getY() * height));
-        } else {
-            Log.i(
-                    TAG,
-                    String.format(
-                            "MediaPipe Hand wrist normalized coordinates (value range: [0, 1]): x=%f, y=%f",
-                            wristLandmark.getX(), wristLandmark.getY()));
+        ArrayList<LandmarkProto.NormalizedLandmark> landmarkList = new ArrayList<>();
+        for(int i=0; i<21; i++) {
+            landmarkList.add(result.multiHandLandmarks().get(0).getLandmarkList().get(i));
         }
-        if (result.multiHandWorldLandmarks().isEmpty()) {
-            return;
-        }
-        LandmarkProto.Landmark wristWorldLandmark =
-                result.multiHandWorldLandmarks().get(0).getLandmarkList().get(HandLandmark.WRIST);
-        Log.i(
-                TAG,
-                String.format(
-                        "MediaPipe Hand wrist world coordinates (in meters with the origin at the hand's"
-                                + " approximate geometric center): x=%f m, y=%f m, z=%f m",
-                        wristWorldLandmark.getX(), wristWorldLandmark.getY(), wristWorldLandmark.getZ()));
+
     }
 }

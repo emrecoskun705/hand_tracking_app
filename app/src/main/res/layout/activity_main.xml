@@ -30,11 +30,25 @@
         android:id="@+id/preview_display_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <TextView
-            android:id="@+id/no_view"
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/instruction" />
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/no_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/instruction" />
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="aslkdlşa dklşsa dklşsad klşas kdlşsakdlş askl şdasklşd asşlkdsal kdaslşd kalşsdkaslşkd şlaskdşlsa kdşlsakd şlask şldaskdlş askd lşaskdşl sa" />
+        </LinearLayout>
+
     </FrameLayout>
 </LinearLayout>
