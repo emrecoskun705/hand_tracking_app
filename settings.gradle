@@ -1,0 +1,2 @@
+rootProject.name = "MyHandApp"
+include ':app'
