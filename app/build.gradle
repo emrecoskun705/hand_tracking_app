@@ -41,4 +41,6 @@ dependencies {
     implementation 'com.google.mediapipe:solution-core:latest.release'
     // Optional: MediaPipe Hands Solution.
     implementation 'com.google.mediapipe:hands:latest.release'
+
+    implementation 'com.android.volley:volley:1.2.1'
 }

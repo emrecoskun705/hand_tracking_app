@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -15,6 +16,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
@@ -24,8 +35,13 @@ import com.google.mediapipe.solutions.hands.Hands;
 import com.google.mediapipe.solutions.hands.HandsOptions;
 import com.google.mediapipe.solutions.hands.HandsResult;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -323,14 +339,73 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void logWristLandmark(HandsResult result) {
+        if(result == null) {
+            return;
+        }
         if (result.multiHandLandmarks().isEmpty()) {
             return;
         }
-        ArrayList<LandmarkProto.NormalizedLandmark> landmarkList = new ArrayList<>();
-        for(int i=0; i<21; i++) {
-            landmarkList.add(result.multiHandLandmarks().get(0).getLandmarkList().get(i));
+        try {
+            RequestQueue requestQueue = Volley.newRequestQueue(this);
+
+            String URL = "http://192.168.43.103:8000/get-ml/";
+            JSONObject jsonBody = new JSONObject();
+            float wrist_x = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getX();
+            float wrist_y = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getY();
+            float wrist_z = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getZ();
+            for(int i=1; i<21; i++) {
+                JSONArray coordinates = new JSONArray();
+                coordinates.put(result.multiHandLandmarks().get(0).getLandmarkList().get(i).getX() - wrist_x);
+                coordinates.put(result.multiHandLandmarks().get(0).getLandmarkList().get(i).getY() - wrist_y);
+                coordinates.put(result.multiHandLandmarks().get(0).getLandmarkList().get(i).getZ() - wrist_z);
+                jsonBody.put("" + i, coordinates);
+            }
+            final String requestBody = jsonBody.toString();
+
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    Log.i("VOLLEY", response);
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.e("VOLLEY", error.toString());
+                }
+            }) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/json; charset=utf-8";
+                }
+
+                @Override
+                public byte[] getBody() throws AuthFailureError {
+                    try {
+                        return requestBody == null ? null : requestBody.getBytes("utf-8");
+                    } catch (UnsupportedEncodingException uee) {
+                        VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", requestBody, "utf-8");
+                        return null;
+                    }
+                }
+
+                @Override
+                protected Response<String> parseNetworkResponse(NetworkResponse response) {
+                    String responseString = "";
+                    if (response != null) {
+                        responseString = String.valueOf(response.statusCode);
+                        // can get more details such as response.headers
+                    }
+                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
+                }
+            };
+            requestQueue.add(stringRequest);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
     }
+
 }
