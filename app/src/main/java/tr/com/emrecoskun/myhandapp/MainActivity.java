@@ -339,8 +339,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    boolean isTrue = true;
 
     private void logWristLandmark(HandsResult result) {
+
+        if(!isTrue) {
+            return;
+        }
+        isTrue = false;
+        new TimeTask(new OnBooleanReceive() {
+            @Override
+            public void onReceive(boolean data) {
+                isTrue = data;
+            }
+        }).execute();
+
         if(result == null) {
             return;
         }
@@ -355,6 +368,7 @@ public class MainActivity extends AppCompatActivity {
             float wrist_x = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getX();
             float wrist_y = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getY();
             float wrist_z = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getZ();
+            Log.i("wrist", ""+wrist_x);
             for(int i=1; i<21; i++) {
                 JSONArray coordinates = new JSONArray();
                 coordinates.put(result.multiHandLandmarks().get(0).getLandmarkList().get(i).getX() - wrist_x);
@@ -362,6 +376,7 @@ public class MainActivity extends AppCompatActivity {
                 coordinates.put(result.multiHandLandmarks().get(0).getLandmarkList().get(i).getZ() - wrist_z);
                 jsonBody.put("" + i, coordinates);
             }
+            jsonBody.put("21", result.multiHandLandmarks().get(0).getLandmarkCount());
             final String requestBody = jsonBody.toString();
 
             StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
@@ -408,4 +423,36 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public interface OnBooleanReceive {
+        void onReceive(boolean data);
+    }
+
+    class TimeTask extends AsyncTask<Boolean, Boolean, Boolean> {
+
+        OnBooleanReceive myOnBooleanReceive;
+
+        public TimeTask(OnBooleanReceive listener) {
+            this.myOnBooleanReceive = listener;
+        }
+
+        @Override
+        protected Boolean doInBackground(Boolean... booleans) {
+            try
+            {
+                Thread.sleep(2000);//Your Interval after which you want to refresh the screen
+            }
+            catch (InterruptedException e)
+            {
+            }
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            if(myOnBooleanReceive != null) {
+                myOnBooleanReceive.onReceive(aBoolean);
+            }
+
+        }
+    }
 }
