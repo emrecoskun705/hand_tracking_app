@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -369,6 +370,7 @@ public class MainActivity extends AppCompatActivity {
             float wrist_y = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getY();
             float wrist_z = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getZ();
             Log.i("wrist", ""+wrist_x);
+            calculator(result);
             for(int i=1; i<21; i++) {
                 JSONArray coordinates = new JSONArray();
                 coordinates.put(result.multiHandLandmarks().get(0).getLandmarkList().get(i).getX() - wrist_x);
@@ -420,6 +422,89 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+    }
+
+    // Watches the 8 and 12 hand landmarks
+    private void calculator(HandsResult result) {
+        if(result == null) {
+            return;
+        }
+        if (result.multiHandLandmarks().isEmpty()) {
+            return;
+        }
+
+        int width = result.inputBitmap().getWidth();
+        int height = result.inputBitmap().getHeight();
+
+        Log.i("inputBitmap", "width: " + width + " height: " + height);
+
+        float eight_x = result.multiHandLandmarks().get(0).getLandmarkList().get(8).getX();
+        float eight_y = result.multiHandLandmarks().get(0).getLandmarkList().get(8).getY();
+
+        float twelve_x = result.multiHandLandmarks().get(0).getLandmarkList().get(12).getX();
+        float twelve_y = result.multiHandLandmarks().get(0).getLandmarkList().get(12).getY();
+        if(eight_x * width - twelve_x * width <= 25 ) {
+            if(eight_x < 0.3f) {
+                if(eight_y < 0.1666f) {
+                    Log.i("answer", "%");
+                } else if(eight_y < 0.3332f) {
+                    Log.i("answer", "1/x");
+                } else if(eight_y < 0.4998f) {
+                    Log.i("answer", "7");
+                } else if(eight_y < 0.6664f) {
+                    Log.i("answer", "4");
+                } else if(eight_y < 0.8330f) {
+                    Log.i("answer", "1");
+                } else {
+                    Log.i("answer", "+/-");
+                }
+            } else if (eight_x < 0.5f) {
+                if(eight_y < 0.1666f) {
+                    Log.i("answer", "CE");
+                } else if(eight_y < 0.3332f) {
+                    Log.i("answer", "x2");
+                } else if(eight_y < 0.4998f) {
+                    Log.i("answer", "8");
+                } else if(eight_y < 0.6664f) {
+                    Log.i("answer", "5");
+                } else if(eight_y < 0.8330f) {
+                    Log.i("answer", "2");
+                } else {
+                    Log.i("answer", "0");
+                }
+            } else if(eight_x < 0.7f) {
+                if(eight_y < 0.1666f) {
+                    Log.i("answer", "c");
+                } else if(eight_y < 0.3332f) {
+                    Log.i("answer", "2 kok x");
+                } else if(eight_y < 0.4998f) {
+                    Log.i("answer", "9");
+                } else if(eight_y < 0.6664f) {
+                    Log.i("answer", "6");
+                } else if(eight_y < 0.8330f) {
+                    Log.i("answer", "3");
+                } else {
+                    Log.i("answer", ",");
+                }
+            } else {
+                if(eight_y < 0.1666f) {
+                    Log.i("answer", "delete");
+                } else if(eight_y < 0.3332f) {
+                    Log.i("answer", "/");
+                } else if(eight_y < 0.4998f) {
+                    Log.i("answer", "*");
+                } else if(eight_y < 0.6664f) {
+                    Log.i("answer", "-");
+                } else if(eight_y < 0.8330f) {
+                    Log.i("answer", "+");
+                } else {
+                    Log.i("answer", "=");
+                }
+            }
+
+        }
+
 
     }
 
