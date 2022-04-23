@@ -441,9 +441,12 @@ public class MainActivity extends AppCompatActivity {
         if(counter != 0 && counter++>20) {
             counter = 0;
         }
+
+        // if 8 point and 12 point landmark is close to each other than 20 then it will work with some time using counter
         if(Math.abs(eight_x * width - twelve_x * width) <= 20 && counter == 0 ) {
             counter = 1;
             TextView myText = (TextView)(findViewById(R.id.calculator_result_text));
+            // location of each signs and numbers
             if(eight_x < 0.3f) {
                 if(eight_y < 0.1666f) {
                     updateCalculatorResultText(myText, "%");
