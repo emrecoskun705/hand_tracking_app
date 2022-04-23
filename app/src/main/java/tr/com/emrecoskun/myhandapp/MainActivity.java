@@ -2,6 +2,7 @@ package tr.com.emrecoskun.myhandapp;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -15,7 +16,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toolbar;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -27,11 +29,9 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
 import com.google.mediapipe.solutioncore.VideoInput;
-import com.google.mediapipe.solutions.hands.HandLandmark;
 import com.google.mediapipe.solutions.hands.Hands;
 import com.google.mediapipe.solutions.hands.HandsOptions;
 import com.google.mediapipe.solutions.hands.HandsResult;
@@ -43,7 +43,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     private Hands hands;
     // Run the pipeline and the model inference on GPU or CPU.
     private static final boolean RUN_ON_GPU = true;
+
+    private static boolean isLearn;
 
     private enum InputSource {
         UNKNOWN,
@@ -76,9 +78,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupStaticImageDemoUiComponents();
-        setupVideoDemoUiComponents();
-        setupLiveDemoUiComponents();
+        setupLiveDemoUiComponentsForLearn();
+        setupLiveDemoUiComponentsForCalculator();
+        findViewById(R.id.calculator).setVisibility(View.INVISIBLE);
+        getSupportActionBar().setTitle("Emre Ali App");
+
     }
+
 
     @Override
     protected void onResume() {
@@ -219,47 +225,27 @@ public class MainActivity extends AppCompatActivity {
         imageView.setVisibility(View.VISIBLE);
     }
 
-    /** Sets up the UI components for the video demo. */
-    private void setupVideoDemoUiComponents() {
-        // The Intent to access gallery and read a video file.
-        videoGetter =
-                registerForActivityResult(
-                        new ActivityResultContracts.StartActivityForResult(),
-                        result -> {
-                            Intent resultIntent = result.getData();
-                            if (resultIntent != null) {
-                                if (result.getResultCode() == RESULT_OK) {
-                                    glSurfaceView.post(
-                                            () ->
-                                                    videoInput.start(
-                                                            this,
-                                                            resultIntent.getData(),
-                                                            hands.getGlContext(),
-                                                            glSurfaceView.getWidth(),
-                                                            glSurfaceView.getHeight()));
-                                }
-                            }
-                        });
-        Button loadVideoButton = findViewById(R.id.button_load_video);
-        loadVideoButton.setOnClickListener(
+    /** Sets up the UI components for the live demo with camera input. */
+    private void setupLiveDemoUiComponentsForLearn() {
+        Button startCameraButton = findViewById(R.id.button_learn);
+        startCameraButton.setOnClickListener(
                 v -> {
+                    getSupportActionBar().setTitle("Learn");
+                    isLearn = true;
+                    findViewById(R.id.calculator).setVisibility(View.INVISIBLE);
                     stopCurrentPipeline();
-                    setupStreamingModePipeline(InputSource.VIDEO);
-                    // Reads video from gallery.
-                    Intent pickVideoIntent = new Intent(Intent.ACTION_PICK);
-                    pickVideoIntent.setDataAndType(MediaStore.Video.Media.INTERNAL_CONTENT_URI, "video/*");
-                    videoGetter.launch(pickVideoIntent);
+                    setupStreamingModePipeline(InputSource.CAMERA);
                 });
     }
 
     /** Sets up the UI components for the live demo with camera input. */
-    private void setupLiveDemoUiComponents() {
+    private void setupLiveDemoUiComponentsForCalculator() {
         Button startCameraButton = findViewById(R.id.button_start_camera);
         startCameraButton.setOnClickListener(
                 v -> {
-                    if (inputSource == InputSource.CAMERA) {
-                        return;
-                    }
+                    getSupportActionBar().setTitle("Calculator");
+                    isLearn = false;
+                    findViewById(R.id.calculator).setVisibility(View.VISIBLE);
                     stopCurrentPipeline();
                     setupStreamingModePipeline(InputSource.CAMERA);
                 });
@@ -340,20 +326,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    boolean isTrue = true;
 
     private void logWristLandmark(HandsResult result) {
+        if (isLearn) {
+            sendMLData(result);
+        } else {
+            calculator(result);
+        }
 
-        if(!isTrue) {
+
+    }
+
+    boolean isTrueSend = true;
+    private void sendMLData(HandsResult result) {
+        if(!isTrueSend) {
             return;
         }
-        isTrue = false;
+        isTrueSend = false;
         new TimeTask(new OnBooleanReceive() {
             @Override
             public void onReceive(boolean data) {
-                isTrue = data;
+                isTrueSend = data;
             }
-        }).execute();
+        }).execute(2000);
 
         if(result == null) {
             return;
@@ -369,7 +364,6 @@ public class MainActivity extends AppCompatActivity {
             float wrist_x = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getX();
             float wrist_y = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getY();
             float wrist_z = result.multiHandLandmarks().get(0).getLandmarkList().get(0).getZ();
-            Log.i("wrist", ""+wrist_x);
             calculator(result);
             for(int i=1; i<21; i++) {
                 JSONArray coordinates = new JSONArray();
@@ -422,10 +416,10 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
     }
 
     // Watches the 8 and 12 hand landmarks
+    int counter = 0;
     private void calculator(HandsResult result) {
         if(result == null) {
             return;
@@ -437,69 +431,74 @@ public class MainActivity extends AppCompatActivity {
         int width = result.inputBitmap().getWidth();
         int height = result.inputBitmap().getHeight();
 
-        Log.i("inputBitmap", "width: " + width + " height: " + height);
 
         float eight_x = result.multiHandLandmarks().get(0).getLandmarkList().get(8).getX();
         float eight_y = result.multiHandLandmarks().get(0).getLandmarkList().get(8).getY();
 
         float twelve_x = result.multiHandLandmarks().get(0).getLandmarkList().get(12).getX();
         float twelve_y = result.multiHandLandmarks().get(0).getLandmarkList().get(12).getY();
-        if(eight_x * width - twelve_x * width <= 25 ) {
+
+        if(counter != 0 && counter++>20) {
+            counter = 0;
+        }
+        if(Math.abs(eight_x * width - twelve_x * width) <= 20 && counter == 0 ) {
+            counter = 1;
+            TextView myText = (TextView)(findViewById(R.id.calculator_result_text));
             if(eight_x < 0.3f) {
                 if(eight_y < 0.1666f) {
-                    Log.i("answer", "%");
+                    updateCalculatorResultText(myText, "%");
                 } else if(eight_y < 0.3332f) {
-                    Log.i("answer", "1/x");
+                    updateCalculatorResultText(myText, "x");
                 } else if(eight_y < 0.4998f) {
-                    Log.i("answer", "7");
+                    updateCalculatorResultText(myText, "7");
                 } else if(eight_y < 0.6664f) {
-                    Log.i("answer", "4");
+                    updateCalculatorResultText(myText, "4");
                 } else if(eight_y < 0.8330f) {
-                    Log.i("answer", "1");
+                    updateCalculatorResultText(myText, "1");
                 } else {
-                    Log.i("answer", "+/-");
+                    updateCalculatorResultText(myText, "+/-");
                 }
             } else if (eight_x < 0.5f) {
                 if(eight_y < 0.1666f) {
-                    Log.i("answer", "CE");
+                    updateCalculatorResultText(myText, "CE");
                 } else if(eight_y < 0.3332f) {
-                    Log.i("answer", "x2");
+                    updateCalculatorResultText(myText, "x2");
                 } else if(eight_y < 0.4998f) {
-                    Log.i("answer", "8");
+                    updateCalculatorResultText(myText, "8");
                 } else if(eight_y < 0.6664f) {
-                    Log.i("answer", "5");
+                    updateCalculatorResultText(myText, "5");
                 } else if(eight_y < 0.8330f) {
-                    Log.i("answer", "2");
+                    updateCalculatorResultText(myText, "2");
                 } else {
-                    Log.i("answer", "0");
+                    updateCalculatorResultText(myText, "0");
                 }
             } else if(eight_x < 0.7f) {
                 if(eight_y < 0.1666f) {
-                    Log.i("answer", "c");
+                    updateCalculatorResultText(myText, "c");
                 } else if(eight_y < 0.3332f) {
-                    Log.i("answer", "2 kok x");
+                    updateCalculatorResultText(myText, "x");
                 } else if(eight_y < 0.4998f) {
-                    Log.i("answer", "9");
+                    updateCalculatorResultText(myText, "9");
                 } else if(eight_y < 0.6664f) {
-                    Log.i("answer", "6");
+                    updateCalculatorResultText(myText, "6");
                 } else if(eight_y < 0.8330f) {
-                    Log.i("answer", "3");
+                    updateCalculatorResultText(myText, "3");
                 } else {
-                    Log.i("answer", ",");
+                    updateCalculatorResultText(myText, ",");
                 }
             } else {
                 if(eight_y < 0.1666f) {
-                    Log.i("answer", "delete");
+                    updateCalculatorResultText(myText, "delete");
                 } else if(eight_y < 0.3332f) {
-                    Log.i("answer", "/");
+                    updateCalculatorResultText(myText, "/");
                 } else if(eight_y < 0.4998f) {
-                    Log.i("answer", "*");
+                    updateCalculatorResultText(myText, "*");
                 } else if(eight_y < 0.6664f) {
-                    Log.i("answer", "-");
+                    updateCalculatorResultText(myText, "-");
                 } else if(eight_y < 0.8330f) {
-                    Log.i("answer", "+");
+                    updateCalculatorResultText(myText, "+");
                 } else {
-                    Log.i("answer", "=");
+                    updateCalculatorResultText(myText, "=");
                 }
             }
 
@@ -508,11 +507,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void updateCalculatorResultText(TextView view, String character) {
+        view.post(new Runnable() {
+            @Override
+            public void run() {
+                String getText = view.getText().toString();
+                if (getText.length() == 0) {
+                    view.setText(character);
+                } else {
+                    view.setText(getText + " " + character);
+                }
+
+            }
+        });
+    }
+
     public interface OnBooleanReceive {
         void onReceive(boolean data);
     }
 
-    class TimeTask extends AsyncTask<Boolean, Boolean, Boolean> {
+    class TimeTask extends AsyncTask<Integer, Boolean, Boolean> {
 
         OnBooleanReceive myOnBooleanReceive;
 
@@ -521,10 +535,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Boolean doInBackground(Boolean... booleans) {
+        protected Boolean doInBackground(Integer... integers) {
+
             try
             {
-                Thread.sleep(2000);//Your Interval after which you want to refresh the screen
+                Thread.sleep(integers[0]);//Your Interval after which you want to refresh the screen
             }
             catch (InterruptedException e)
             {

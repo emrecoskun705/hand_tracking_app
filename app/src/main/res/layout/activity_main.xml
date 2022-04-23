@@ -16,11 +16,13 @@
             android:layout_width="wrap_content"
             style="?android:attr/buttonBarButtonStyle" android:layout_height="wrap_content"
             android:text="@string/load_picture" />
+
         <Button
-            android:id="@+id/button_load_video"
+            android:id="@+id/button_learn"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
-            style="?android:attr/buttonBarButtonStyle" android:layout_height="wrap_content"
-            android:text="@string/load_video" />
+            android:layout_height="wrap_content"
+            android:text="@string/learn" />
         <Button
             android:id="@+id/button_start_camera"
             android:layout_width="wrap_content"
@@ -48,7 +50,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="@string/instruction" />
+                    android:text="@string/instruction"
+                    android:textColor="#03B2C8" />
 
                 <TextView
                     android:id="@+id/textView"
@@ -65,6 +68,15 @@
             android:scaleType="fitXY"
             android:alpha="0.8"
             app:srcCompat="@drawable/calculator2" />
+
+        <TextView
+            android:id="@+id/calculator_result_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="false"
+            android:layout_centerHorizontal="true"
+            android:alpha="0.89"
+            android:textColor="#00BCD4" />
 
 
 
