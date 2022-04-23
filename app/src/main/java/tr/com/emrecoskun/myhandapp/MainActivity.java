@@ -2,7 +2,7 @@ package tr.com.emrecoskun.myhandapp;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -17,7 +17,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toolbar;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -43,7 +42,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -449,59 +447,63 @@ public class MainActivity extends AppCompatActivity {
             // location of each signs and numbers
             if(eight_x < 0.3f) {
                 if(eight_y < 0.1666f) {
-                    updateCalculatorResultText(myText, "%");
+                    updateCalculatorResultText(myText, "%", false);
                 } else if(eight_y < 0.3332f) {
-                    updateCalculatorResultText(myText, "x");
+//                    updateCalculatorResultText(myText, "x", false);
+                    alertCalculator("This operation is not used yet.");
                 } else if(eight_y < 0.4998f) {
-                    updateCalculatorResultText(myText, "7");
+                    updateCalculatorResultText(myText, "7", true);
                 } else if(eight_y < 0.6664f) {
-                    updateCalculatorResultText(myText, "4");
+                    updateCalculatorResultText(myText, "4", true);
                 } else if(eight_y < 0.8330f) {
-                    updateCalculatorResultText(myText, "1");
+                    updateCalculatorResultText(myText, "1", true);
                 } else {
-                    updateCalculatorResultText(myText, "+/-");
+//                    updateCalculatorResultText(myText, "+/-", false);
+                    alertCalculator("This operation is not used yet.");
                 }
             } else if (eight_x < 0.5f) {
                 if(eight_y < 0.1666f) {
-                    updateCalculatorResultText(myText, "CE");
+                    updateCalculatorResultText(myText, "CE", false);
                 } else if(eight_y < 0.3332f) {
-                    updateCalculatorResultText(myText, "x2");
+//                    updateCalculatorResultText(myText, "x2", false);
+                    alertCalculator("This operation is not used yet.");
                 } else if(eight_y < 0.4998f) {
-                    updateCalculatorResultText(myText, "8");
+                    updateCalculatorResultText(myText, "8", true);
                 } else if(eight_y < 0.6664f) {
-                    updateCalculatorResultText(myText, "5");
+                    updateCalculatorResultText(myText, "5", true);
                 } else if(eight_y < 0.8330f) {
-                    updateCalculatorResultText(myText, "2");
+                    updateCalculatorResultText(myText, "2", true);
                 } else {
-                    updateCalculatorResultText(myText, "0");
+                    updateCalculatorResultText(myText, "0", true);
                 }
             } else if(eight_x < 0.7f) {
                 if(eight_y < 0.1666f) {
-                    updateCalculatorResultText(myText, "c");
+                    updateCalculatorResultText(myText, "c", false);
                 } else if(eight_y < 0.3332f) {
-                    updateCalculatorResultText(myText, "x");
+//                    updateCalculatorResultText(myText, "x", false);
+                    alertCalculator("This operation is not used yet.");
                 } else if(eight_y < 0.4998f) {
-                    updateCalculatorResultText(myText, "9");
+                    updateCalculatorResultText(myText, "9", true);
                 } else if(eight_y < 0.6664f) {
-                    updateCalculatorResultText(myText, "6");
+                    updateCalculatorResultText(myText, "6", true);
                 } else if(eight_y < 0.8330f) {
-                    updateCalculatorResultText(myText, "3");
+                    updateCalculatorResultText(myText, "3", true);
                 } else {
-                    updateCalculatorResultText(myText, ",");
+                    updateCalculatorResultText(myText, ".", true);
                 }
             } else {
                 if(eight_y < 0.1666f) {
-                    updateCalculatorResultText(myText, "delete");
+                    updateCalculatorResultText(myText, "delete", false);
                 } else if(eight_y < 0.3332f) {
-                    updateCalculatorResultText(myText, "/");
+                    updateCalculatorResultText(myText, "/", false);
                 } else if(eight_y < 0.4998f) {
-                    updateCalculatorResultText(myText, "*");
+                    updateCalculatorResultText(myText, "*", false);
                 } else if(eight_y < 0.6664f) {
-                    updateCalculatorResultText(myText, "-");
+                    updateCalculatorResultText(myText, "-", false);
                 } else if(eight_y < 0.8330f) {
-                    updateCalculatorResultText(myText, "+");
+                    updateCalculatorResultText(myText, "+", false);
                 } else {
-                    updateCalculatorResultText(myText, "=");
+                    updateCalculatorResultText(myText, "=", true);
                 }
             }
 
@@ -510,19 +512,68 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void updateCalculatorResultText(TextView view, String character) {
+    public void updateCalculatorResultText(TextView view, String character, boolean isNumber) {
         view.post(new Runnable() {
             @Override
             public void run() {
                 String getText = view.getText().toString();
-                if (getText.length() == 0) {
-                    view.setText(character);
-                } else {
-                    view.setText(getText + " " + character);
+                int lenText = getText.length();
+
+                if (character.equals("c")) {
+                    view.setText("");
+                    return;
+                }
+
+                if(!isNumber && checkOperation(getText)) {
+                    alertCalculator("There must be 1 operation at a time.");
+                    return;
+                }
+
+
+                if(character.equals("=") && lenText > 0 && checkOperation(getText)) {
+                    String[] arr = getText.split(" ");
+                    double num1 = Double.parseDouble(arr[0]);
+                    double num2 = Double.parseDouble(arr[2]);
+                    String operation = arr[1];
+                    if(operation.equals("%")) {
+                        num1 = num1 % num2;
+                    } else if(operation.equals("/")) {
+                        num1 /= num2;
+                    } else if(operation.equals("*")) {
+                        num1 *= num2;
+                    } else if(operation.equals("+")) {
+                        num1 += num2;
+                    } else if(operation.equals("-")) {
+                        num1 -= num2;
+                    }
+
+                    view.setText(""+num1);
+                    return;
+                }
+                if(character.equals("delete")) {
+
+                    if (getText.charAt(lenText - 1) == ' ') {
+                        view.setText(getText.substring(0, lenText - 3));
+                    } else {
+                        view.setText(getText.substring(0, lenText - 1));
+                    }
+                }  else {
+                    view.setText(getText +  (isNumber ? character : " " + character + " "));
                 }
 
             }
         });
+    }
+
+    private boolean checkOperation(String getText) {
+        return (getText.contains("%") || getText.contains("/") || getText.contains("*") || getText.contains("+") || getText.contains("-"));
+    }
+
+    private void alertCalculator(String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("Invalid Operation.");
+        builder.setMessage(message);
+        builder.show();
     }
 
     public interface OnBooleanReceive {

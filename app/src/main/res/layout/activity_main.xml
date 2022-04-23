@@ -76,7 +76,8 @@
             android:layout_centerInParent="false"
             android:layout_centerHorizontal="true"
             android:alpha="0.89"
-            android:textColor="#00BCD4" />
+            android:textColor="#00BCD4"
+            android:textSize="20sp" />
 
 
 
