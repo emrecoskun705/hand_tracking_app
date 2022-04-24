@@ -231,6 +231,8 @@ public class MainActivity extends AppCompatActivity {
                     getSupportActionBar().setTitle("Learn");
                     isLearn = true;
                     findViewById(R.id.calculator).setVisibility(View.INVISIBLE);
+                    findViewById(R.id.calculator_result_text).setVisibility(View.INVISIBLE);
+                    findViewById(R.id.learn_result_text).setVisibility(View.VISIBLE);
                     stopCurrentPipeline();
                     setupStreamingModePipeline(InputSource.CAMERA);
                 });
@@ -244,6 +246,8 @@ public class MainActivity extends AppCompatActivity {
                     getSupportActionBar().setTitle("Calculator");
                     isLearn = false;
                     findViewById(R.id.calculator).setVisibility(View.VISIBLE);
+                    findViewById(R.id.calculator_result_text).setVisibility(View.VISIBLE);
+                    findViewById(R.id.learn_result_text).setVisibility(View.INVISIBLE);
                     stopCurrentPipeline();
                     setupStreamingModePipeline(InputSource.CAMERA);
                 });
@@ -376,7 +380,8 @@ public class MainActivity extends AppCompatActivity {
             StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String response) {
-                    Log.i("VOLLEY", response);
+                    Log.i("VOLLEY1", response.split("'")[1]);
+                    ((TextView)findViewById(R.id.learn_result_text)).setText(response.split("'")[1]);
                 }
             }, new Response.ErrorListener() {
                 @Override
@@ -399,15 +404,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                @Override
-                protected Response<String> parseNetworkResponse(NetworkResponse response) {
-                    String responseString = "";
-                    if (response != null) {
-                        responseString = String.valueOf(response.statusCode);
-                        // can get more details such as response.headers
-                    }
-                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
-                }
+
             };
             requestQueue.add(stringRequest);
 
