@@ -282,9 +282,10 @@ public class MainActivity extends AppCompatActivity {
         glSurfaceView.setRenderInputImage(true);
         hands.setResultListener(
                 handsResult -> {
-                    logWristLandmark(handsResult);
+
                     glSurfaceView.setRenderData(handsResult);
                     glSurfaceView.requestRender();
+                    logWristLandmark(handsResult);
                 });
 
         // The runnable to start camera after the gl surface view is attached.
@@ -424,14 +425,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         int width = result.inputBitmap().getWidth();
-        int height = result.inputBitmap().getHeight();
 
 
         float eight_x = result.multiHandLandmarks().get(0).getLandmarkList().get(8).getX();
         float eight_y = result.multiHandLandmarks().get(0).getLandmarkList().get(8).getY();
 
         float twelve_x = result.multiHandLandmarks().get(0).getLandmarkList().get(12).getX();
-        float twelve_y = result.multiHandLandmarks().get(0).getLandmarkList().get(12).getY();
 
         if(counter != 0 && counter++>20) {
             counter = 0;
